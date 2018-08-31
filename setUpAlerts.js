@@ -11,7 +11,6 @@ const random = require("random-js");                       // used to generate r
  *  armfile = file containing the ARM template to deploy
  *  infile = file containing the default thresholds (eg. defaultthresholds.csv)
  *  alertsub = subscription to create the alert in
- *  searchsub = subscription to grab resource IDs from 
  *  rg = resource group where the new alerts should be created
  *  ag = Monitoring Action Group Resource ID
  **/
@@ -20,7 +19,6 @@ const optionDefinitions = [
     { name: 'armfile', alias: 'r', type: String },
     { name: 'infile', alias: 'i', type: String },
     { name: 'alertsub', alias: 'a', type: String },
-    { name: 'searchsub', alias: 'f', type: String },
     { name: 'rg', type: String },
     { name: 'ag', type: String }
   ];
@@ -31,7 +29,6 @@ const clOptions = commandLineArgs(optionDefinitions);
 console.log("ARGS are as follows:");
 console.log("\tarmfile:" + clOptions.armfile);
 console.log("\tinfile:" + clOptions.infile);
-console.log("\tsearchsub:" + clOptions.searchsub);
 console.log("\talertsub:" + clOptions.alertsub);
 console.log("\trg:" + clOptions.rg);
 console.log("\tag:" + clOptions.ag);
@@ -55,10 +52,11 @@ if(amILoggedIn.indexOf("[]") > -1) {  // assumes someplace in there you'll see a
     execSync('az login');
 }
 
-// Change subscriptions and grab ALL resources in the new sub, change back to where you want to create the alerts
-execSync('az account set --subscription ' + clOptions.searchsub);
-let azObjs = JSON.parse(execSync('az resource list',{encoding: 'utf8'}));
+// Change subscriptions to where the work will be done
+// Grab ALL resources 
 execSync('az account set --subscription ' + clOptions.alertsub);
+let azObjs = JSON.parse(execSync('az resource list',{encoding: 'utf8'}));
+
 
 // For every threshold defined in the CSV
 for (let metric of defaultThresholds)
