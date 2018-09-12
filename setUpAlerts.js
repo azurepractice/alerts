@@ -88,8 +88,8 @@ for (let metric of defaultThresholds)
             let rg = resourceInfo[resourceInfo.length-2];
             let rname = resourceInfo[resourceInfo.length-1];
 
-            // Ignore anything that's an App Service 'slot' resource type 
-            // ASSERT: we do not care about slot based alerts (eg. HTTP server errors)
+            // This isn't perfect but will allow you to target specific resources you want to set alerts on
+            // Currently this doesn't support wildcarding
             if(!rname.includes(clOptions.filter)) { 
                 continue;
             }
