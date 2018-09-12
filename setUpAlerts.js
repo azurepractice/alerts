@@ -20,7 +20,8 @@ const optionDefinitions = [
     { name: 'infile', alias: 'i', type: String },
     { name: 'alertsub', alias: 'a', type: String },
     { name: 'rg', type: String },
-    { name: 'ag', type: String }
+    { name: 'ag', type: String },
+    { name: 'filter', alias: 'f', type: String }
   ];
 
 const clOptions = commandLineArgs(optionDefinitions);
@@ -32,6 +33,7 @@ console.log("\tinfile:" + clOptions.infile);
 console.log("\talertsub:" + clOptions.alertsub);
 console.log("\trg:" + clOptions.rg);
 console.log("\tag:" + clOptions.ag);
+console.log("\tfilter:" + clOptions.filter);
 
 // Create options used for parsing the CSV file
 let options = {
@@ -85,6 +87,13 @@ for (let metric of defaultThresholds)
             // Split the data in resourceInfo in the appropriate variables
             let rg = resourceInfo[resourceInfo.length-2];
             let rname = resourceInfo[resourceInfo.length-1];
+
+            // Ignore anything that's an App Service 'slot' resource type 
+            // ASSERT: we do not care about slot based alerts (eg. HTTP server errors)
+            if(!rname.includes(clOptions.filter)) { 
+                continue;
+            }
+
             console.log("Applying rule: [" + metric.alertName + "] to [" + rname + "] in [" + rg + "]");
 
             // Build an alert name around the parsed info and fill out the contents of the tmp ARM parameters file
