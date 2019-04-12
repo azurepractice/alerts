@@ -21,6 +21,7 @@ const optionDefinitions = [
     { name: 'alertsub', alias: 'a', type: String },
     { name: 'rg', type: String },
     { name: 'ag', type: String },
+    { name: 'skipexisting', alias: 's', type: String },
     { name: 'filter', alias: 'f', type: String }
   ];
 
@@ -33,6 +34,7 @@ console.log("\tinfile:" + clOptions.infile);
 console.log("\talertsub:" + clOptions.alertsub);
 console.log("\trg:" + clOptions.rg);
 console.log("\tag:" + clOptions.ag);
+console.log("\tskipexisting:" + clOptions.skipexisting);
 console.log("\tfilter:" + clOptions.filter);
 
 // Create options used for parsing the CSV file
@@ -48,8 +50,12 @@ let inputCsv = fs.readFileSync(clOptions.infile, { encoding : 'utf8'});
 let defaultThresholds = csvjson.toObject(inputCsv, options);
 
 // Make sure you're logged in to Azure
-let amILoggedIn = execSync('az account list').toString();
-if(amILoggedIn.indexOf("[]") > -1) {  // assumes someplace in there you'll see an empty set if you're not logged in
+let amILoggedIn = undefined;
+try {
+    amILoggedIn = execSync('az webapp list');
+} catch {}
+
+if(amILoggedIn == undefined) {  // assumes someplace in there you'll see an error if you're not logged in
     // ASSERT: You're not logged in and need to do that now!
     execSync('az login');
 }
@@ -58,6 +64,9 @@ if(amILoggedIn.indexOf("[]") > -1) {  // assumes someplace in there you'll see a
 // Grab ALL resources 
 execSync('az account set --subscription ' + clOptions.alertsub);
 let azObjs = JSON.parse(execSync('az resource list',{encoding: 'utf8'}));
+
+// Collect all of the existing alerts
+let azAlerts = JSON.parse(execSync('az monitor metrics alert list',{encoding: 'utf8'}));
 
 
 // For every threshold defined in the CSV
@@ -90,14 +99,20 @@ for (let metric of defaultThresholds)
 
             // This isn't perfect but will allow you to target specific resources you want to set alerts on
             // Currently this doesn't support wildcarding
-            if(!rname.includes(clOptions.filter)) { 
+            if(clOptions.filter && (!rname.includes(clOptions.filter))) { 
+                continue;
+            }
+
+            // Build an alert name around the parsed info and fill out the contents of the tmp ARM parameters file
+            let aname =  metric.alertName + " on [" + rname + "] in [" + rg + "]";
+
+            // If the array already exists by name, move on to the next one
+            if((azAlerts.findIndex(obj => obj.name==aname) >= 0)  && clOptions.skipexisting)  {
                 continue;
             }
 
             console.log("Applying rule: [" + metric.alertName + "] to [" + rname + "] in [" + rg + "]");
 
-            // Build an alert name around the parsed info and fill out the contents of the tmp ARM parameters file
-            let aname =  metric.alertName + " on [" + rname + "] in [" + rg + "]";
             armParameters.$schema = "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#";
             armParameters.contentVersion = "1.0.0.0";
             armParameters.parameters = {
@@ -145,7 +160,7 @@ for (let metric of defaultThresholds)
             let engine = new random(random.engines.mt19937().autoSeed());
             let randomNum = engine.integer(1, 1000000);
 
-            // Build the AZ cli payload to depoy the new alert
+            // Build the AZ cli payload to deploy the new alert
             let cmd = "az group deployment create --resource-group " + clOptions.rg + " --name MetricDeployment_" + randomNum + " --parameters @" + tmpobj.name +  " --template-file " + clOptions.armfile;
             console.log(cmd);
 

@@ -1,7 +1,7 @@
 alertName,provider,metricName,operator,threshold,windowSize,evaluationFrequency,Occurrence,timeAggregation,alertSeverity
-Storage Account Availability,Microsoft.Storage,Availability,LessThan,100,PT5M,PT1M,1,Average,1
+Storage Account Availability,Microsoft.Storage,Availability,LessThan,90,PT5M,PT1M,1,Average,1
 Web App Server Error,Microsoft.Web/sites,Http5xx,GreaterThan,50,PT5M,PT1M,1,Average,1
 ASP CPU over 80,Microsoft.Web/serverFarms,CpuPercentage,GreaterThan,80,PT5M,PT1M,1,Average,1
 ASP Memory over 80,Microsoft.Web/serverFarms,MemoryPercentage,GreaterThan,80,PT5M,PT1M,1,Average,1
 App Gateway Unhealthy Host Count,Microsoft.Network/applicationGateways,UnhealthyHostCount,GreaterThan,0,PT5M,PT1M,1,Average,1
-App Gateway Failed Requests,Microsoft.Network/applicationGateways,FailedRequests,GreaterThan,100,PT5M,PT1M,1,Total,1
+App Gateway Failed Requests,Microsoft.Network/applicationGateways,FailedRequests,GreaterThan,500,PT5M,PT1M,1,Total,1
